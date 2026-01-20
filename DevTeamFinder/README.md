@@ -45,7 +45,9 @@ https://www.youtube.com/watch?v=1Lcz0bft4r8
 
 ## Geliştirici Bilgileri
 Melike Kumanlı 
+
 Uludağ Üniversitesi  
+
 Yönetim Bilişim Sistemleri
 
 
