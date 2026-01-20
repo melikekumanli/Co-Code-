@@ -1,0 +1,136 @@
+@model List<DevTeamFinder.Models.Project>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Projelerim";
+    var skills = ViewData["Skills"] as SelectList;
+    var selectedSkillId = ViewData["SelectedSkillId"] as int?;
+    var currentDeveloperId = ViewData["CurrentDeveloperId"] as int?;
+}
+
+<!-- Content Header -->
+<div class="content-header">
+    <h1 class="content-title">Projelerim</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Yeni Proje Oluştur
+    </a>
+</div>
+
+<!-- Content Body -->
+<div class="content-body">
+    <!-- Filter Section -->
+    @if (skills != null)
+    {
+        <div class="filter-panel mb-4">
+            <form asp-action="Index" method="get" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label for="skillId" class="filter-label">Yeteneğe Göre Filtrele</label>
+                    <select name="skillId" id="skillId" class="form-select" onchange="this.form.submit()">
+                        <option value="">Tüm Projeler</option>
+                        @foreach (var skill in skills)
+                        {
+                            <option value="@skill.Value" selected="@(selectedSkillId.HasValue && selectedSkillId.Value.ToString() == skill.Value)">
+                                @skill.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    @if (selectedSkillId.HasValue)
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-x-circle"></i> Filtreyi Temizle
+                        </a>
+                    }
+                </div>
+            </form>
+        </div>
+    }
+
+    <!-- Projects Table/List -->
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-folder-x"></i>
+            </div>
+            <h3 class="empty-state-title">Henüz proje yok</h3>
+            <p class="empty-state-text mb-4">İlk projenizi oluşturarak başlayın</p>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> İlk Projeyi Oluştur
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="data-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PROJE ADI</th>
+                        <th>YETENEKLERİ</th>
+                        <th>DURUM</th>
+                        <th style="text-align: right;">İŞLEMLER</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var project in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="font-semibold">@project.Baslik</div>
+                                @if (!string.IsNullOrEmpty(project.Aciklama))
+                                {
+                                    <div class="text-muted text-sm mt-1">
+                                        @(project.Aciklama.Length > 80 ? project.Aciklama.Substring(0, 80) + "..." : project.Aciklama)
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                @if (project.ProjectSkills != null && project.ProjectSkills.Any())
+                                {
+                                    @foreach (var projectSkill in project.ProjectSkills.Take(4))
+                                    {
+                                        <span class="skill-badge">@projectSkill.Skill.Ad</span>
+                                    }
+                                    @if (project.ProjectSkills.Count > 4)
+                                    {
+                                        <span class="skill-badge">+@(project.ProjectSkills.Count - 4)</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted text-sm">Yetenek yok</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="status-badge @(project.Durum == "Aktif" ? "active" : "inactive")">
+                                    @project.Durum
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons" style="justify-content: flex-end;">
+                                    <a asp-action="Details" asp-route-id="@project.Id" class="btn btn-sm btn-outline-primary btn-icon">
+                                        <i class="bi bi-eye"></i> Detay
+                                    </a>
+                                    @if (currentDeveloperId.HasValue && project.DeveloperId == currentDeveloperId.Value)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@project.Id" class="btn btn-sm btn-outline-secondary btn-icon">
+                                            <i class="bi bi-pencil"></i> Düzenle
+                                        </a>
+                                        <form asp-action="Delete" method="post" class="d-inline" 
+                                              onsubmit="return confirm('Bu projeyi silmek istediğinizden emin misiniz?');">
+                                            <input type="hidden" name="id" value="@project.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger btn-icon">
+                                                <i class="bi bi-trash"></i> Sil
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

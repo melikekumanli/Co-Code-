@@ -1,0 +1,186 @@
+@model List<DevTeamFinder.Models.Project>
+@{
+    ViewData["Title"] = "Proje Havuzu";
+    var allSkills = ViewData["AllSkills"] as List<DevTeamFinder.Models.Skill>;
+    var searchTerm = ViewData["SearchTerm"] as string;
+    var selectedSkillIds = ViewData["SelectedSkillIds"] as List<int> ?? new List<int>();
+}
+
+<!-- Content Header -->
+<div class="content-header">
+    <div>
+        <h1 class="content-title">Proje Havuzu</h1>
+        <p class="text-muted mb-0">Aktif projeleri keşfedin ve ekibe katılın</p>
+    </div>
+</div>
+
+<!-- Content Body -->
+<div class="content-body">
+    <div class="row">
+        <!-- Filter Panel (Left) -->
+        <div class="col-md-3 mb-4">
+            <div class="filter-panel">
+                <form method="get" asp-action="Public">
+                    <!-- Search -->
+                    <div class="filter-section">
+                        <label for="searchTerm" class="filter-label">
+                            <i class="bi bi-search"></i> Proje Ara
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="searchTerm" 
+                               name="searchTerm" 
+                               value="@searchTerm"
+                               placeholder="Başlık, açıklama...">
+                    </div>
+
+                    <!-- Skills Filter -->
+                    <div class="filter-section">
+                        <label class="filter-label">
+                            <i class="bi bi-stars"></i> Yetenekler
+                        </label>
+                        <div class="mb-2">
+                            <input type="text" 
+                                   class="form-control form-control-sm" 
+                                   id="skillSearchPublic" 
+                                   placeholder="🔍 Yetenek ara..." 
+                                   autocomplete="off">
+                        </div>
+                        <div id="skillsFilterContainer" style="max-height: 400px; overflow-y: auto;">
+                            @if (allSkills != null && allSkills.Any())
+                            {
+                                @foreach (var skill in allSkills)
+                                {
+                                    <div class="filter-checkbox skill-filter-item" data-skill-name="@skill.Ad.ToLower()">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="skillIds" 
+                                               value="@skill.Id" 
+                                               id="skill_@skill.Id"
+                                               @(selectedSkillIds.Contains(skill.Id) ? "checked" : "")>
+                                        <label class="form-check-label" for="skill_@skill.Id">
+                                            @skill.Ad
+                                        </label>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <small class="text-muted text-xs">En az bir yetenek eşleşmesi</small>
+                    </div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const searchInput = document.getElementById('skillSearchPublic');
+                            const skillsContainer = document.getElementById('skillsFilterContainer');
+                            
+                            if (searchInput && skillsContainer) {
+                                searchInput.addEventListener('input', function() {
+                                    const searchTerm = this.value.toLowerCase().trim();
+                                    const skillItems = skillsContainer.querySelectorAll('.skill-filter-item');
+                                    
+                                    skillItems.forEach(item => {
+                                        const skillName = item.getAttribute('data-skill-name') || '';
+                                        if (skillName.includes(searchTerm)) {
+                                            item.style.display = '';
+                                        } else {
+                                            item.style.display = 'none';
+                                        }
+                                    });
+                                });
+                            }
+                        });
+                    </script>
+
+                    <!-- Action Buttons -->
+                    <div class="filter-section">
+                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-funnel"></i> Filtrele
+                        </button>
+                        @if (!string.IsNullOrEmpty(searchTerm) || selectedSkillIds.Any())
+                        {
+                            <a asp-action="Public" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-x-circle"></i> Temizle
+                            </a>
+                        }
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Projects List (Right) -->
+        <div class="col-md-9">
+            @if (Model == null || Model.Count == 0)
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <h3 class="empty-state-title">Proje bulunamadı</h3>
+                    <p class="empty-state-text">Arama kriterlerinizi değiştirerek tekrar deneyin</p>
+                </div>
+            }
+            else
+            {
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PROJE</th>
+                                <th>YETENEKLERİ</th>
+                                <th>SAHİBİ</th>
+                                <th style="text-align: right;">İŞLEM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="font-semibold">@project.Baslik</div>
+                                        @if (!string.IsNullOrEmpty(project.Aciklama))
+                                        {
+                                            <div class="text-muted text-sm mt-1">
+                                                @(project.Aciklama.Length > 100 ? project.Aciklama.Substring(0, 100) + "..." : project.Aciklama)
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (project.ProjectSkills != null && project.ProjectSkills.Any())
+                                        {
+                                            @foreach (var ps in project.ProjectSkills.Take(5))
+                                            {
+                                                <span class="skill-badge">@ps.Skill.Ad</span>
+                                            }
+                                            @if (project.ProjectSkills.Count > 5)
+                                            {
+                                                <span class="skill-badge">+@(project.ProjectSkills.Count - 5)</span>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="font-medium">@project.Developer.AdSoyad</div>
+                                        @if (!string.IsNullOrEmpty(project.Developer.DeneyimSeviyesi))
+                                        {
+                                            <div class="text-muted text-xs">@project.Developer.DeneyimSeviyesi</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons" style="justify-content: flex-end;">
+                                            <a asp-action="Details" asp-route-id="@project.Id" class="btn btn-sm btn-primary btn-icon">
+                                                <i class="bi bi-eye"></i> İncele
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Results Count -->
+                <div class="mt-3 text-muted text-sm">
+                    <i class="bi bi-info-circle"></i> @Model.Count proje bulundu
+                </div>
+            }
+        </div>
+    </div>
+</div>

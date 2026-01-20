@@ -1,0 +1,440 @@
+@{
+    ViewData["Title"] = "Davetler";
+    var beklemede = ViewData["Beklemede"] as List<DevTeamFinder.Models.Invitation>;
+    var kabulEdildi = ViewData["KabulEdildi"] as List<DevTeamFinder.Models.Invitation>;
+    var reddedildi = ViewData["Reddedildi"] as List<DevTeamFinder.Models.Invitation>;
+    var sentRequestsBeklemede = ViewData["SentRequestsBeklemede"] as List<DevTeamFinder.Models.Invitation>;
+    var sentRequestsKabulEdildi = ViewData["SentRequestsKabulEdildi"] as List<DevTeamFinder.Models.Invitation>;
+    var sentRequestsReddedildi = ViewData["SentRequestsReddedildi"] as List<DevTeamFinder.Models.Invitation>;
+    var projectRequestsBeklemede = ViewData["ProjectRequestsBeklemede"] as List<DevTeamFinder.Models.Invitation>;
+    var projectRequestsKabulEdildi = ViewData["ProjectRequestsKabulEdildi"] as List<DevTeamFinder.Models.Invitation>;
+    var projectRequestsReddedildi = ViewData["ProjectRequestsReddedildi"] as List<DevTeamFinder.Models.Invitation>;
+}
+
+<!-- Content Header -->
+<div class="content-header">
+    <h1 class="content-title">Davetler</h1>
+</div>
+
+<!-- Content Body -->
+<div class="content-body">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#received-pending">
+                <i class="bi bi-clock-history"></i> Bekleyen Davetler (@(beklemede?.Count ?? 0))
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#received-accepted">
+                <i class="bi bi-check-circle"></i> Kabul Edilenler (@(kabulEdildi?.Count ?? 0))
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#received-rejected">
+                <i class="bi bi-x-circle"></i> Reddedilenler (@(reddedildi?.Count ?? 0))
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#sent-requests">
+                <i class="bi bi-send"></i> Gönderdiğim İstekler (@(((sentRequestsBeklemede?.Count ?? 0) + (sentRequestsKabulEdildi?.Count ?? 0) + (sentRequestsReddedildi?.Count ?? 0))))
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#project-requests">
+                <i class="bi bi-inbox"></i> Projeme Gelen İstekler (@(projectRequestsBeklemede?.Count ?? 0))
+            </a>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content mt-4">
+        <!-- Received Invitations - Pending -->
+        <div class="tab-pane fade show active" id="received-pending">
+            @if (beklemede != null && beklemede.Any())
+            {
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PROJE</th>
+                                <th>PROJE SAHİBİ</th>
+                                <th>YETENEKLERİ</th>
+                                <th style="text-align: right;">İŞLEMLER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var invitation in beklemede)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="font-semibold">@invitation.Project.Baslik</div>
+                                        @if (!string.IsNullOrEmpty(invitation.Not))
+                                        {
+                                            <div class="text-muted text-sm mt-1">
+                                                <i class="bi bi-chat-left-text"></i> @invitation.Not
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="font-medium">@invitation.Project.Developer.AdSoyad</div>
+                                    </td>
+                                    <td>
+                                        @if (invitation.Project.ProjectSkills != null && invitation.Project.ProjectSkills.Any())
+                                        {
+                                            @foreach (var ps in invitation.Project.ProjectSkills.Take(4))
+                                            {
+                                                <span class="skill-badge">@ps.Skill.Ad</span>
+                                            }
+                                            @if (invitation.Project.ProjectSkills.Count > 4)
+                                            {
+                                                <span class="skill-badge">+@(invitation.Project.ProjectSkills.Count - 4)</span>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons" style="justify-content: flex-end;">
+                                            <form asp-action="Accept" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@invitation.Id" />
+                                                <button type="submit" class="btn btn-sm btn-icon" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                                    <i class="bi bi-check-lg"></i> Kabul Et
+                                                </button>
+                                            </form>
+                                            <form asp-action="Reject" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@invitation.Id" />
+                                                <button type="submit" class="btn btn-sm btn-icon" style="background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                                    <i class="bi bi-x-lg"></i> Reddet
+                                                </button>
+                                            </form>
+                                            <a asp-controller="Projects" asp-action="Details" asp-route-id="@invitation.ProjectId" 
+                                               class="btn btn-sm btn-icon" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); text-decoration: none;">
+                                                <i class="bi bi-eye"></i> Detay
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                    <h3 class="empty-state-title">Bekleyen davet yok</h3>
+                    <p class="empty-state-text">Proje sahipleri size davet gönderdiğinde burada görünecek</p>
+                </div>
+            }
+        </div>
+
+        <!-- Received Invitations - Accepted -->
+        <div class="tab-pane fade" id="received-accepted">
+            @if (kabulEdildi != null && kabulEdildi.Any())
+            {
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PROJE</th>
+                                <th>PROJE SAHİBİ</th>
+                                <th>YETENEKLERİ</th>
+                                <th style="text-align: right;">İŞLEM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var invitation in kabulEdildi)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="font-semibold">@invitation.Project.Baslik</div>
+                                        <span class="status-badge active">Ekiptesiniz</span>
+                                    </td>
+                                    <td>@invitation.Project.Developer.AdSoyad</td>
+                                    <td>
+                                        @if (invitation.Project.ProjectSkills != null && invitation.Project.ProjectSkills.Any())
+                                        {
+                                            @foreach (var ps in invitation.Project.ProjectSkills.Take(4))
+                                            {
+                                                <span class="skill-badge">@ps.Skill.Ad</span>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons" style="justify-content: flex-end;">
+                                            <a asp-controller="Projects" asp-action="Details" asp-route-id="@invitation.ProjectId" 
+                                               class="btn btn-sm btn-primary btn-icon">
+                                                <i class="bi bi-eye"></i> Projeye Git
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-check-circle"></i></div>
+                    <h3 class="empty-state-title">Kabul edilen davet yok</h3>
+                </div>
+            }
+        </div>
+
+        <!-- Received Invitations - Rejected -->
+        <div class="tab-pane fade" id="received-rejected">
+            @if (reddedildi != null && reddedildi.Any())
+            {
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PROJE</th>
+                                <th>PROJE SAHİBİ</th>
+                                <th>DURUM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var invitation in reddedildi)
+                            {
+                                <tr>
+                                    <td>@invitation.Project.Baslik</td>
+                                    <td>@invitation.Project.Developer.AdSoyad</td>
+                                    <td><span class="status-badge inactive">Reddedildi</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-x-circle"></i></div>
+                    <h3 class="empty-state-title">Reddedilen davet yok</h3>
+                </div>
+            }
+        </div>
+
+        <!-- Sent Requests - My Requests -->
+        <div class="tab-pane fade" id="sent-requests">
+            @{
+                var hasAnySentRequest = (sentRequestsBeklemede != null && sentRequestsBeklemede.Any()) ||
+                                       (sentRequestsKabulEdildi != null && sentRequestsKabulEdildi.Any()) ||
+                                       (sentRequestsReddedildi != null && sentRequestsReddedildi.Any());
+            }
+            @if (hasAnySentRequest)
+            {
+                <!-- Beklemede Olan İstekler -->
+                @if (sentRequestsBeklemede != null && sentRequestsBeklemede.Any())
+            {
+                    <h5 class="mt-3 mb-3" style="color: #6B7280; font-weight: 600;">Bekleyen İstekler</h5>
+                    <div class="data-table mb-4">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PROJE</th>
+                                <th>PROJE SAHİBİ</th>
+                                <th>DURUM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var request in sentRequestsBeklemede)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="font-semibold">@request.Project.Baslik</div>
+                                        @if (!string.IsNullOrEmpty(request.Not))
+                                        {
+                                            <div class="text-muted text-sm mt-1">
+                                                <i class="bi bi-chat-left-text"></i> @request.Not
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>@request.Project.Developer.AdSoyad</td>
+                                    <td><span class="status-badge pending">Beklemede</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                }
+
+                <!-- Kabul Edilen İstekler -->
+                @if (sentRequestsKabulEdildi != null && sentRequestsKabulEdildi.Any())
+                {
+                    <h5 class="mt-3 mb-3" style="color: #6B7280; font-weight: 600;">Kabul Edilen İstekler</h5>
+                    <div class="data-table mb-4">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>PROJE</th>
+                                    <th>PROJE SAHİBİ</th>
+                                    <th>DURUM</th>
+                                    <th style="text-align: right;">İŞLEM</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var request in sentRequestsKabulEdildi)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="font-semibold">@request.Project.Baslik</div>
+                                            @if (!string.IsNullOrEmpty(request.Not))
+                                            {
+                                                <div class="text-muted text-sm mt-1">
+                                                    <i class="bi bi-chat-left-text"></i> @request.Not
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>@request.Project.Developer.AdSoyad</td>
+                                        <td><span class="status-badge active">Kabul Edildi</span></td>
+                                        <td>
+                                            <div class="action-buttons" style="justify-content: flex-end;">
+                                                <a asp-controller="Projects" asp-action="Details" asp-route-id="@request.ProjectId" 
+                                                   class="btn btn-sm btn-primary btn-icon">
+                                                    <i class="bi bi-eye"></i> Projeye Git
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <!-- Reddedilen İstekler -->
+                @if (sentRequestsReddedildi != null && sentRequestsReddedildi.Any())
+                {
+                    <h5 class="mt-3 mb-3" style="color: #6B7280; font-weight: 600;">Reddedilen İstekler</h5>
+                    <div class="data-table mb-4">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>PROJE</th>
+                                    <th>PROJE SAHİBİ</th>
+                                    <th>DURUM</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var request in sentRequestsReddedildi)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="font-semibold">@request.Project.Baslik</div>
+                                            @if (!string.IsNullOrEmpty(request.Not))
+                                            {
+                                                <div class="text-muted text-sm mt-1">
+                                                    <i class="bi bi-chat-left-text"></i> @request.Not
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>@request.Project.Developer.AdSoyad</td>
+                                        <td><span class="status-badge inactive">Reddedildi</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-send"></i></div>
+                    <h3 class="empty-state-title">Gönderilen istek yok</h3>
+                    <p class="empty-state-text">Proje Havuzu'ndan projelere katılma isteği gönderebilirsiniz</p>
+                </div>
+            }
+        </div>
+
+        <!-- Project Requests - Requests to My Projects -->
+        <div class="tab-pane fade" id="project-requests">
+            @if (projectRequestsBeklemede != null && projectRequestsBeklemede.Any())
+            {
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PROJE</th>
+                                <th>KATILMAK İSTEYEN</th>
+                                <th>NOT</th>
+                                <th style="text-align: right;">İŞLEMLER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var request in projectRequestsBeklemede)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="font-semibold">@request.Project.Baslik</div>
+                                    </td>
+                                    <td>@request.Developer.AdSoyad</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(request.Not))
+                                        {
+                                            <div class="text-muted text-sm">
+                                                <i class="bi bi-chat-left-text"></i> @request.Not
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons" style="justify-content: flex-end;">
+                                            <form asp-action="Accept" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@request.Id" />
+                                                <button type="submit" class="btn btn-sm btn-icon" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                                    <i class="bi bi-check-lg"></i> Kabul Et
+                                                </button>
+                                            </form>
+                                            <form asp-action="Reject" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@request.Id" />
+                                                <button type="submit" class="btn btn-sm btn-icon" style="background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                                    <i class="bi bi-x-lg"></i> Reddet
+                                                </button>
+                                            </form>
+                                            <a asp-controller="Developers" asp-action="Index" 
+                                               class="btn btn-sm btn-icon" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); text-decoration: none;">
+                                                <i class="bi bi-person"></i> Profil
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                    <h3 class="empty-state-title">Projelerinize gelen istek yok</h3>
+                    <p class="empty-state-text">Geliştiriciler projelerinize katılma isteği gönderdiğinde burada görünecek</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

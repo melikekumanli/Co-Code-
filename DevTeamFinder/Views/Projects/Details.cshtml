@@ -1,0 +1,465 @@
+@model DevTeamFinder.Models.Project
+@{
+    ViewData["Title"] = Model.Baslik;
+    var isOwner = (bool)ViewData["IsOwner"];
+    var hasInvitation = ViewData["HasInvitation"] as bool? ?? false;
+    var currentInvitationStatus = ViewData["CurrentInvitationStatus"] as string;
+    var developersWithInvitationStatus = ViewData["DevelopersWithInvitationStatus"] as IEnumerable<dynamic>;
+    var developersWithCompatibility = ViewData["DevelopersWithCompatibility"] as IEnumerable<dynamic>;
+    var recommendedDevelopers = ViewData["RecommendedDevelopers"] as IEnumerable<dynamic>;
+    var projectTeamMembers = ViewData["ProjectTeamMembers"] as List<DevTeamFinder.Models.Developer>;
+    var teamMembersWithCompatibility = ViewData["TeamMembersWithCompatibility"] as IEnumerable<dynamic>;
+    var canViewContactInfo = ViewData["CanViewContactInfo"] as bool? ?? false;
+    var teamContactInfo = ViewData["TeamContactInfo"] as IEnumerable<dynamic>;
+}
+
+<div class="container mt-5">
+    @* Başarı/Hata Mesajları *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h1 class="card-title" style="color: var(--text-primary);">@Model.Baslik</h1>
+                    <p class="text-muted">Proje Sahibi: @Model.Developer.AdSoyad</p>
+                    
+                    <hr />
+
+                    <h5>Açıklama</h5>
+                    <p class="text-muted">@(string.IsNullOrEmpty(Model.Aciklama) ? "Açıklama yok" : Model.Aciklama)</p>
+
+                    @if (Model.ProjectSkills != null && Model.ProjectSkills.Any())
+                    {
+                        <h5 class="mt-4">Gerekli Yetenekler</h5>
+                        <div>
+                            @foreach (var projectSkill in Model.ProjectSkills)
+                            {
+                                <span class="skill-badge">@projectSkill.Skill.Ad</span>
+                            }
+                        </div>
+                    }
+
+                    <div class="mt-4 d-flex align-items-center gap-3">
+                        <span class="badge @(Model.Durum == "Aktif" ? "bg-success" : "bg-secondary")">
+                            Durum: @Model.Durum
+                        </span>
+                        
+                        @* Proje sahibi değilse ve daveti yoksa "Projeye Katılmak İstiyorum" butonu *@
+                        @if (!isOwner && !hasInvitation)
+                        {
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#requestJoinModal">
+                                Projeye Katılmak İstiyorum
+                            </button>
+                        }
+                        else if (!isOwner && hasInvitation && currentInvitationStatus == "Beklemede")
+                        {
+                            <span class="badge bg-warning">Katılım isteğiniz bekleniyor</span>
+                        }
+                        else if (!isOwner && hasInvitation && currentInvitationStatus == "KabulEdildi")
+                        {
+                            <span class="badge bg-success">Projeye katıldınız</span>
+                        }
+                        else if (!isOwner && hasInvitation && currentInvitationStatus == "Reddedildi")
+                        {
+                            <span class="badge bg-secondary">Katılım isteğiniz reddedildi</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proje Ekibi -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Proje Ekibi</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Proje Sahibi -->
+                    <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                        <div class="flex-grow-1">
+                            <strong>@Model.Developer.AdSoyad</strong>
+                            <span class="badge bg-primary ms-2">Proje Sahibi</span>
+                            @if (!string.IsNullOrEmpty(Model.Developer.DeneyimSeviyesi))
+                            {
+                                <br />
+                                <small class="text-muted">@Model.Developer.DeneyimSeviyesi</small>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Projeye Katılan Geliştiriciler -->
+                    @if (teamMembersWithCompatibility != null && teamMembersWithCompatibility.Any())
+                    {
+                        @foreach (var item in teamMembersWithCompatibility)
+                        {
+                            var member = (DevTeamFinder.Models.Developer)item.GetType().GetProperty("Developer").GetValue(item);
+                            var compatibilityScore = (int)item.GetType().GetProperty("CompatibilityScore").GetValue(item);
+                            
+                            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                                <div class="flex-grow-1">
+                                    <strong>@member.AdSoyad</strong>
+                                    @if (!string.IsNullOrEmpty(member.DeneyimSeviyesi))
+                                    {
+                                        <br />
+                                        <small class="text-muted">@member.DeneyimSeviyesi</small>
+                                    }
+                                    @if (compatibilityScore > 0)
+                                    {
+                                        <br />
+                                        <small class="text-info"><strong>%@compatibilityScore Uyum</strong></small>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else if (projectTeamMembers != null && projectTeamMembers.Any())
+                    {
+                        @foreach (var member in projectTeamMembers)
+                        {
+                            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                                <div class="flex-grow-1">
+                                    <strong>@member.AdSoyad</strong>
+                                    @if (!string.IsNullOrEmpty(member.DeneyimSeviyesi))
+                                    {
+                                        <br />
+                                        <small class="text-muted">@member.DeneyimSeviyesi</small>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Henüz projeye katılan geliştirici yok.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- İletişim Bilgileri (Sadece Ekip Üyeleri) -->
+            @if (canViewContactInfo && teamContactInfo != null && teamContactInfo.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header" style="background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%); border: none;">
+                        <h5 class="mb-0" style="color: #FFFFFF;">
+                            <i class="bi bi-envelope"></i> Ekip İletişim Bilgileri
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-shield-check"></i> 
+                            <strong>Gizlilik:</strong> Bu bilgiler sadece proje ekibi üyeleri tarafından görülebilir.
+                        </p>
+                        
+                        @foreach (var contact in teamContactInfo)
+                        {
+                            var developer = (DevTeamFinder.Models.Developer)contact.GetType().GetProperty("Developer").GetValue(contact);
+                            var email = (string)contact.GetType().GetProperty("Email").GetValue(contact);
+                            var role = (string)contact.GetType().GetProperty("Role").GetValue(contact);
+                            
+                            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                                <div class="flex-grow-1">
+                                    <strong>@developer.AdSoyad</strong>
+                                    <span class="badge @(role == "Proje Sahibi" ? "bg-primary" : "bg-secondary") ms-2">@role</span>
+                                    <br />
+                                    <small class="text-muted">
+                                        <i class="bi bi-envelope-fill"></i> @email
+                                    </small>
+                                    @if (!string.IsNullOrEmpty(developer.DeneyimSeviyesi))
+                                    {
+                                        <br />
+                                        <small class="text-muted">@developer.DeneyimSeviyesi</small>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        
+                        <div class="alert alert-info mb-0 mt-3">
+                            <small>
+                                <i class="bi bi-info-circle"></i> 
+                                Email bilgileri sadece bu projenin ekip üyeleri arasında paylaşılmaktadır.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Önerilen Geliştiriciler -->
+            @if (recommendedDevelopers != null && recommendedDevelopers.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header" style="background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%); border: none;">
+                        <h5 class="mb-0" style="color: #FFFFFF;">Önerilen Geliştiriciler</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Projenize en uygun geliştiriciler (%50+ uyum):</p>
+                        
+                        @foreach (var item in recommendedDevelopers)
+                        {
+                            var developer = (DevTeamFinder.Models.Developer)item.GetType().GetProperty("Developer").GetValue(item);
+                            var compatibilityScore = (int)item.GetType().GetProperty("CompatibilityScore").GetValue(item);
+                            
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <strong>@developer.AdSoyad</strong>
+                                            @if (!string.IsNullOrEmpty(developer.DeneyimSeviyesi))
+                                            {
+                                                <br />
+                                                <small class="text-muted">@developer.DeneyimSeviyesi</small>
+                                            }
+                                            <br />
+                                            <small class="text-info"><strong>%@compatibilityScore Uyum</strong></small>
+                                        </div>
+                                        @if (isOwner)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#inviteModalRecommended_@developer.Id">
+                                                Projeme Katıl
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (isOwner && developersWithInvitationStatus != null && developersWithInvitationStatus.Any())
+        {
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Geliştiricilere Davet Gönder</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Projenize katılabilecek geliştiricileri seçin:</p>
+                        
+                        @foreach (var item in developersWithInvitationStatus)
+                        {
+                            var developer = (DevTeamFinder.Models.Developer)item.GetType().GetProperty("Developer").GetValue(item);
+                            var invitationStatus = (string)item.GetType().GetProperty("InvitationStatus").GetValue(item);
+                            var developerHasInvitation = !string.IsNullOrEmpty(invitationStatus);
+                            
+                            // Uyum skorunu bul
+                            int compatibilityScore = 0;
+                            var compatibilityItem = developersWithCompatibility?.FirstOrDefault(c => 
+                                ((DevTeamFinder.Models.Developer)c.GetType().GetProperty("Developer").GetValue(c)).Id == developer.Id);
+                            if (compatibilityItem != null)
+                            {
+                                compatibilityScore = (int)compatibilityItem.GetType().GetProperty("CompatibilityScore").GetValue(compatibilityItem);
+                            }
+
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                <div class="flex-grow-1">
+                                    <strong>@developer.AdSoyad</strong>
+                                    @if (!string.IsNullOrEmpty(developer.DeneyimSeviyesi))
+                                    {
+                                        <br />
+                                        <small class="text-muted">@developer.DeneyimSeviyesi</small>
+                                    }
+                                    @if (compatibilityScore > 0)
+                                    {
+                                        <br />
+                                        <small class="text-info"><strong>%@compatibilityScore Uyum</strong></small>
+                                    }
+                                    @if (developerHasInvitation)
+                                    {
+                                        <br />
+                                        <small class="@(invitationStatus == "Beklemede" ? "text-warning" : invitationStatus == "KabulEdildi" ? "text-success" : "text-muted")">
+                                            @if (invitationStatus == "Beklemede")
+                                            {
+                                                <span class="badge bg-warning">Davet Beklemede</span>
+                                            }
+                                            else if (invitationStatus == "KabulEdildi")
+                                            {
+                                                <span class="badge bg-success">Kabul Edildi</span>
+                                            }
+                                            else if (invitationStatus == "Reddedildi")
+                                            {
+                                                <span class="badge bg-secondary">Reddedildi</span>
+                                            }
+                                        </small>
+                                    }
+                                </div>
+                                <div>
+                                    @if (developerHasInvitation)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-secondary" disabled>
+                                            Davet Gönderildi
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#inviteModal_@developer.Id">
+                                            Davet Gönder
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (developersWithInvitationStatus.All(item => !string.IsNullOrEmpty(item.InvitationStatus as string)))
+                        {
+                            <p class="text-muted small">Tüm geliştiricilere davet gönderildi.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else if (isOwner && (developersWithInvitationStatus == null || !developersWithInvitationStatus.Any()))
+        {
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted">Sistemde başka geliştirici yok.</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <a asp-action="Index" class="btn btn-outline-primary">Geri Dön</a>
+                @if (isOwner)
+                {
+                    <div class="btn-group" role="group">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Düzenle</a>
+                        <form asp-action="Delete" method="post" class="d-inline" 
+                              onsubmit="return confirm('Bu projeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.');">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-outline-danger">Sil</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Projeye Katılma İsteği Modal *@
+@if (!isOwner && !hasInvitation)
+{
+    <div class="modal fade" id="requestJoinModal" tabindex="-1" aria-labelledby="requestJoinModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="requestJoinModalLabel">Projeye Katılma İsteği</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="Invitations" asp-action="RequestToJoin" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="projectId" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label for="requestNote" class="form-label">Mesajınız (Opsiyonel)</label>
+                            <textarea class="form-control" id="requestNote" name="not" rows="4" 
+                                      placeholder="Proje sahibine bir mesaj yazabilirsiniz..."></textarea>
+                            <small class="text-muted">Örnek: Merhaba, projenize katkıda bulunmak isterim. React ve Node.js konusunda deneyimliyim.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary">Katılma İsteği Gönder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@* Davet Gönder Modal'ları - Geliştiricilere Davet Gönder Bölümü *@
+@if (isOwner && developersWithInvitationStatus != null && developersWithInvitationStatus.Any())
+{
+    @foreach (var item in developersWithInvitationStatus)
+    {
+        var developer = (DevTeamFinder.Models.Developer)item.GetType().GetProperty("Developer").GetValue(item);
+        var invitationStatus = (string)item.GetType().GetProperty("InvitationStatus").GetValue(item);
+        var developerHasInvitation = !string.IsNullOrEmpty(invitationStatus);
+        
+        @if (!developerHasInvitation)
+        {
+            <div class="modal fade" id="inviteModal_@developer.Id" tabindex="-1" aria-labelledby="inviteModalLabel_@developer.Id" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="inviteModalLabel_@developer.Id">@developer.AdSoyad - Davet Gönder</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form asp-controller="Invitations" asp-action="Create" method="post">
+                            <div class="modal-body">
+                                <input type="hidden" name="projectId" value="@Model.Id" />
+                                <input type="hidden" name="developerId" value="@developer.Id" />
+                                <div class="mb-3">
+                                    <label for="inviteNote_@developer.Id" class="form-label">Davet Mesajı (Opsiyonel)</label>
+                                    <textarea class="form-control" id="inviteNote_@developer.Id" name="not" rows="4" 
+                                              placeholder="Geliştiriciye bir mesaj yazabilirsiniz..."></textarea>
+                                    <small class="text-muted">Örnek: Merhaba, projenize katılmanızı isteriz. React konusunda deneyiminizden faydalanmak isteriz.</small>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Davet Gönder</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+@* Davet Gönder Modal'ları - Önerilen Geliştiriciler Bölümü *@
+@if (recommendedDevelopers != null && recommendedDevelopers.Any())
+{
+    @foreach (var item in recommendedDevelopers)
+    {
+        var developer = (DevTeamFinder.Models.Developer)item.GetType().GetProperty("Developer").GetValue(item);
+        
+        <div class="modal fade" id="inviteModalRecommended_@developer.Id" tabindex="-1" aria-labelledby="inviteModalRecommendedLabel_@developer.Id" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="inviteModalRecommendedLabel_@developer.Id">@developer.AdSoyad - Davet Gönder</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form asp-controller="Invitations" asp-action="Create" method="post">
+                        <div class="modal-body">
+                            <input type="hidden" name="projectId" value="@Model.Id" />
+                            <input type="hidden" name="developerId" value="@developer.Id" />
+                            <div class="mb-3">
+                                <label for="inviteNoteRecommended_@developer.Id" class="form-label">Davet Mesajı (Opsiyonel)</label>
+                                <textarea class="form-control" id="inviteNoteRecommended_@developer.Id" name="not" rows="4" 
+                                          placeholder="Geliştiriciye bir mesaj yazabilirsiniz..."></textarea>
+                                <small class="text-muted">Örnek: Merhaba, projenize katılmanızı isteriz. Yetenekleriniz projemize çok uygun.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                            <button type="submit" class="btn btn-primary">Davet Gönder</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}

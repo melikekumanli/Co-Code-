@@ -1,0 +1,174 @@
+/* DevTeamFinder - Violet Tasarım Sistemi */
+
+:root {
+    --primary-color: #4F46E5;
+    --primary-hover: #4338CA;
+    --background-light: #F8FAFC;
+    --text-dark: #111827;
+    --text-muted: #6B7280;
+}
+
+/* Genel Kurallar */
+html, body {
+    height: 100%;
+}
+
+body {
+    background-color: var(--background-light);
+    color: var(--text-dark);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-dark);
+}
+
+p, .text-muted {
+    color: var(--text-muted);
+}
+
+/* Kart Stilleri */
+.card {
+    border-radius: 12px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background-color: white;
+}
+
+/* Buton Stilleri */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.btn-outline-primary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    border-radius: 8px;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* Navbar */
+.navbar {
+    background-color: white !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color) !important;
+    text-decoration: none;
+}
+
+.navbar-brand:hover {
+    color: var(--primary-hover) !important;
+}
+
+.nav-link {
+    color: var(--text-dark) !important;
+    font-weight: 500;
+    margin: 0 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Main Content */
+main {
+    flex: 1;
+    padding-bottom: 2rem;
+}
+
+/* Footer */
+.footer {
+    background-color: white;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 1.5rem 0;
+    margin-top: 2rem;
+    flex-shrink: 0;
+}
+
+.footer p {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%);
+    padding: 6rem 0;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-cta {
+    margin-bottom: 1.5rem;
+}
+
+.hero-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.hero-link:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.125rem;
+    }
+}

@@ -1,0 +1,110 @@
+@model List<DevTeamFinder.Models.Skill>
+@{
+    ViewData["Title"] = "Yeni Proje Oluştur";
+    var skills = ViewData["Skills"] as List<DevTeamFinder.Models.Skill> ?? Model;
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 mt-4 mb-5">
+            <div class="card p-4">
+                <h2 class="text-center mb-4" style="color: var(--text-primary);">Yeni Proje Oluştur</h2>
+
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label for="baslik" class="form-label">Proje Başlığı</label>
+                        <input type="text" class="form-control" id="baslik" name="baslik" placeholder="Proje adını giriniz" required />
+                        @if (ViewData.ModelState["baslik"]?.Errors.Count > 0)
+                        {
+                            <span class="text-danger">@ViewData.ModelState["baslik"].Errors[0].ErrorMessage</span>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="aciklama" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="aciklama" name="aciklama" rows="3" placeholder="Proje hakkında detaylı bilgi veriniz (opsiyonel)"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Gerekli Yetenekler (Skill)</label>
+                        <div class="mb-2">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="skillSearch" 
+                                   placeholder="🔍 Yetenek ara..." 
+                                   autocomplete="off">
+                        </div>
+                        <div class="border rounded p-3" id="skillsContainer" style="max-height: 300px; overflow-y: auto;">
+                            @if (skills != null && skills.Any())
+                            {
+                                @foreach (var skill in skills)
+                                {
+                                    <div class="form-check skill-item" data-skill-name="@skill.Ad.ToLower()">
+                                        <input class="form-check-input" type="checkbox" name="skillIds" value="@skill.Id" id="skill_@skill.Id" />
+                                        <label class="form-check-label" for="skill_@skill.Id">
+                                            @skill.Ad
+                                        </label>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted small">Henüz skill eklenmemiş.</p>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4 pt-3 border-top">
+                        <a asp-action="Index" class="btn btn-outline-primary">İptal</a>
+                        <button type="submit" class="btn btn-primary btn-lg px-5">Projeyi Oluştur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('skillSearch');
+            const skillsContainer = document.getElementById('skillsContainer');
+            
+            if (searchInput && skillsContainer) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    const skillItems = skillsContainer.querySelectorAll('.skill-item');
+                    
+                    let visibleCount = 0;
+                    skillItems.forEach(item => {
+                        const skillName = item.getAttribute('data-skill-name') || '';
+                        if (skillName.includes(searchTerm)) {
+                            item.style.display = '';
+                            visibleCount++;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                    
+                    // Eğer hiçbir sonuç yoksa mesaj göster
+                    const noResultsMsg = skillsContainer.querySelector('.no-results-msg');
+                    if (visibleCount === 0 && searchTerm) {
+                        if (!noResultsMsg) {
+                            const msg = document.createElement('p');
+                            msg.className = 'text-muted small no-results-msg';
+                            msg.textContent = 'Arama sonucu bulunamadı.';
+                            skillsContainer.appendChild(msg);
+                        }
+                    } else {
+                        if (noResultsMsg) {
+                            noResultsMsg.remove();
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

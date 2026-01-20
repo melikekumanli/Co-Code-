@@ -1,0 +1,49 @@
+@model DevTeamFinder.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Giriş Yap";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="auth-logo-text">
+                <i class="bi bi-code-slash"></i> co-code
+            </div>
+        </div>
+
+        <h1 class="auth-title">Giriş Yap</h1>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success" role="alert">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <form asp-action="Login" method="post" class="auth-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="form-group">
+                <label asp-for="Email">Email</label>
+                <input asp-for="Email" class="form-control" type="email" placeholder="ornek@email.com" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Sifre">Şifre</label>
+                <input asp-for="Sifre" class="form-control" type="password" placeholder="••••••••" />
+                <span asp-validation-for="Sifre" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Giriş Yap</button>
+        </form>
+
+        <div class="auth-footer">
+            Hesabın yok mu? <a asp-action="Register">Kayıt Ol</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

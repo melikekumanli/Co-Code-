@@ -1,0 +1,172 @@
+@model DevTeamFinder.Models.Developer
+@{
+    ViewData["Title"] = "Yeteneklerim";
+    var availableSkills = ViewData["AvailableSkills"] as SelectList;
+}
+
+<!-- Content Header -->
+<div class="content-header">
+    <h1 class="content-title">Yeteneklerim</h1>
+</div>
+
+<!-- Content Body -->
+<div class="content-body">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Başarı/Hata Mesajları -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Profile Info Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="font-semibold mb-3">
+                        <i class="bi bi-person-circle"></i> Profil Bilgileri
+                    </h5>
+                    <div class="mb-2">
+                        <span class="text-muted text-sm">Ad Soyad:</span>
+                        <span class="font-medium ms-2">@Model.AdSoyad</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.DeneyimSeviyesi))
+                    {
+                        <div class="mb-2">
+                            <span class="text-muted text-sm">Deneyim Seviyesi:</span>
+                            <span class="font-medium ms-2">@Model.DeneyimSeviyesi</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Hakkinda))
+                    {
+                        <div>
+                            <span class="text-muted text-sm">Hakkında:</span>
+                            <p class="mt-1 mb-0">@Model.Hakkinda</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Current Skills -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="font-semibold mb-3">
+                        <i class="bi bi-stars"></i> Mevcut Yeteneklerim (@(Model.DeveloperSkills?.Count ?? 0))
+                    </h5>
+                    @if (Model.DeveloperSkills != null && Model.DeveloperSkills.Any())
+                    {
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var developerSkill in Model.DeveloperSkills)
+                            {
+                                <div class="skill-badge" style="display: inline-flex; align-items: center; gap: 8px; position: relative; padding-right: 35px;">
+                                    @developerSkill.Skill.Ad
+                                    <form asp-action="RemoveSkill" method="post" class="d-inline" 
+                                          onsubmit="return confirm('Bu yeteneği kaldırmak istediğinizden emin misiniz?');"
+                                          style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%);">
+                                        <input type="hidden" name="skillId" value="@developerSkill.SkillId" />
+                                        <button type="submit" class="btn btn-sm" 
+                                                style="padding: 0; border: none; background: none; color: #DC2626; font-size: 16px; line-height: 1; cursor: pointer;"
+                                                title="Kaldır">
+                                            ×
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state" style="padding: 40px 20px;">
+                            <div class="empty-state-icon" style="font-size: 32px;"><i class="bi bi-stars"></i></div>
+                            <p class="empty-state-text mb-0">Henüz yetenek eklenmemiş</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Skill Sidebar -->
+        <div class="col-md-4">
+            <div class="card" style="position: sticky; top: 20px;">
+                <div class="card-body">
+                    <h5 class="font-semibold mb-3">
+                        <i class="bi bi-plus-circle"></i> Yetenek Ekle
+                    </h5>
+                    @if (availableSkills != null && availableSkills.Any())
+                    {
+                        <form asp-action="AddSkill" method="post">
+                            <div class="mb-3">
+                                <label for="skillId" class="form-label text-sm">Yetenek Seçin</label>
+                                <div class="mb-2">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="skillSearch" 
+                                           placeholder="🔍 Yetenek ara..." 
+                                           autocomplete="off">
+                                </div>
+                                <select class="form-select" id="skillId" name="skillId" required size="10" style="max-height: 300px; overflow-y: auto;">
+                                    <option value="">-- Seçin --</option>
+                                    @foreach (var skill in availableSkills)
+                                    {
+                                        <option value="@skill.Value" data-skill-name="@skill.Text.ToLower()">@skill.Text</option>
+                                    }
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-plus-lg"></i> Ekle
+                            </button>
+                        </form>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const searchInput = document.getElementById('skillSearch');
+                                const skillSelect = document.getElementById('skillId');
+                                
+                                searchInput.addEventListener('input', function() {
+                                    const searchTerm = this.value.toLowerCase().trim();
+                                    const options = skillSelect.querySelectorAll('option');
+                                    
+                                    options.forEach(option => {
+                                        if (option.value === '') {
+                                            option.style.display = '';
+                                            return;
+                                        }
+                                        
+                                        const skillName = option.getAttribute('data-skill-name') || option.textContent.toLowerCase();
+                                        if (skillName.includes(searchTerm)) {
+                                            option.style.display = '';
+                                        } else {
+                                            option.style.display = 'none';
+                                        }
+                                    });
+                                    
+                                    // İlk görünen seçeneği seç
+                                    const firstVisible = Array.from(options).find(opt => 
+                                        opt.style.display !== 'none' && opt.value !== ''
+                                    );
+                                    if (firstVisible && searchTerm) {
+                                        skillSelect.value = firstVisible.value;
+                                    }
+                                });
+                            });
+                        </script>
+                    }
+                    else
+                    {
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-check-circle"></i> Tüm yeteneklere sahipsiniz!
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
